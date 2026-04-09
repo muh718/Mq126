@@ -1,1 +1,315 @@
+```html
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تحدي التشابه - النسخة الاحترافية</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&family=Amiri:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #020617;
+            --card-dark: #1e293b;
+            --primary-accent: #38bdf8;
+            --correct: #22c55e;
+            --wrong: #ef4444;
+            --text-main: #f8fafc;
+        }
+
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+        }
+
+        .math-ltr {
+            direction: ltr !important;
+            display: inline-block;
+            font-family: 'Courier New', Courier, monospace;
+            font-weight: bold;
+            unicode-bidi: isolate;
+        }
+
+        .thuluth-text {
+            font-family: 'Amiri', serif;
+            font-size: 2.5rem;
+            color: var(--primary-accent);
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .game-container {
+            background: var(--card-dark);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            border-radius: 2rem;
+            width: 95%;
+            max-width: 700px;
+            padding: 2.5rem;
+            position: relative;
+        }
+
+        .option-btn {
+            background-color: #334155;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 2px solid transparent;
+            text-align: right;
+            padding: 1rem 1.5rem;
+            border-radius: 1rem;
+            width: 100%;
+            margin-bottom: 0.75rem;
+            font-size: 1.1rem;
+        }
+
+        .option-btn:hover:not(:disabled) {
+            background-color: #475569;
+            border-color: var(--primary-accent);
+            transform: translateX(-5px);
+        }
+
+        .option-btn.correct {
+            background-color: var(--correct) !important;
+            border-color: var(--correct) !important;
+            color: white;
+        }
+
+        .option-btn.wrong {
+            background-color: var(--wrong) !important;
+            border-color: var(--wrong) !important;
+            color: white;
+        }
+
+        .progress-bar-bg {
+            height: 8px;
+            background: #0f172a;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 1.5rem 0;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #0284c7, #38bdf8);
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+
+        input[type="text"] {
+            background: #0f172a;
+            border: 2px solid #334155;
+            color: white;
+            text-align: center;
+            border-radius: 1rem;
+            padding: 1rem;
+            width: 100%;
+            font-size: 1.2rem;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--primary-accent);
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- الشاشة الأولى: إدخال الاسم -->
+    <div id="start-screen" class="game-container text-center fade-in">
+        <h1 class="text-3xl font-black mb-4 text-sky-400">تحدي تشابه المثلثات</h1>
+        <p class="text-slate-400 mb-8 font-medium text-lg">مراجعة شاملة لمواضيع التشابه والتناسب</p>
+        
+        <div class="mb-8">
+            <label class="block text-right mb-2 text-slate-300 mr-2">أدخل اسمك الثلاثي للمتابعة:</label>
+            <input type="text" id="user-name-input" placeholder="مثال: محمد أحمد علي">
+        </div>
+
+        <button onclick="startGame()" class="w-full bg-sky-500 hover:bg-sky-400 text-slate-900 font-extrabold py-4 rounded-xl text-xl shadow-xl transition-all active:scale-95">
+            دخول الاختبار
+        </button>
+    </div>
+
+    <!-- شاشة اللعبة -->
+    <div id="game-screen" class="game-container hidden fade-in">
+        <div class="flex justify-between items-center text-sm font-bold">
+            <span id="question-number" class="text-sky-400">السؤال 1 / 30</span>
+            <span id="current-score" class="text-emerald-400">النقاط: 0</span>
+        </div>
+        
+        <div class="progress-bar-bg">
+            <div id="progress-fill" class="progress-bar-fill"></div>
+        </div>
+
+        <div class="mb-8 mt-4">
+            <h2 id="question-text" class="text-xl font-bold leading-relaxed text-slate-100"></h2>
+        </div>
+
+        <div id="options-container">
+            <!-- Options generated here -->
+        </div>
+
+        <div class="mt-8 flex justify-center">
+            <button id="next-button" onclick="loadNextQuestion()" class="hidden bg-white text-slate-900 px-10 py-3 rounded-lg font-black hover:bg-slate-200 transition-all">
+                التالي ←
+            </button>
+        </div>
+    </div>
+
+    <!-- شاشة النتيجة -->
+    <div id="result-screen" class="game-container text-center hidden fade-in">
+        <h2 class="text-3xl font-black mb-2 text-white">انتهى الاختبار</h2>
+        <p id="final-name" class="text-xl text-sky-400 font-bold mb-6"></p>
+        
+        <div class="bg-slate-800 p-8 rounded-3xl mb-10">
+            <span class="text-slate-400 block mb-2">درجتك النهائية:</span>
+            <div id="final-score" class="text-6xl font-black text-white">0 / 30</div>
+        </div>
+
+        <div class="thuluth-text">
+            تمنياتي لكم بالتوفيق ….. أ/محمد القرني
+        </div>
+
+        <button onclick="location.reload()" class="mt-8 text-slate-400 hover:text-white underline font-bold">
+            إعادة المحاولة
+        </button>
+    </div>
+
+    <script>
+        const questions = [
+            { q: "إذا تشابه مضلعان، فإن زواياهما المتناظرة تكون:", a: ["متطابقة", "متناسبة", "متكاملة", "متتامة"], c: 0 },
+            { q: "إذا كان معامل تشابه مضلعين يساوي <span class='math-ltr'>1</span>، فإن المضلعين:", a: ["متطابقان", "متشابهان فقط", "مختلفان", "متكافئان"], c: 0 },
+            { q: "إذا تشابه مضلعان، فإن أطوال أضلاعهما المتناظرة تكون:", a: ["متناسبة", "متطابقة", "متساوية", "متعامدة"], c: 0 },
+            { q: "النسبة بين محيطي مضلعين متشابهين تساوي:", a: ["معامل التشابه", "مربع معامل التشابه", "جذر معامل التشابه", "نصف معامل التشابه"], c: 0 },
+            { q: "يتشابه المثلثان إذا تطابقت زاويتان في أحدهما مع نظائرهما في الآخر، وتسمى الحالة:", a: ["AA", "SSS", "SAS", "ASA"], c: 0 },
+            { q: "إذا رسم مستقيم يوازي أحد أضلاع مثلث ويقطع ضلعيه الآخرين، فإنه يقسمهما إلى قطع أطوالها:", a: ["متناسبة", "متطابقة", "متساوية", "متوازية"], c: 0 },
+            { q: "القطعة المنصفة في المثلث توازي أحد الأضلاع وطولها يساوي:", a: ["نصف طوله", "ضعف طوله", "نفس طوله", "ثلث طوله"], c: 0 },
+            { q: "في المثلثين المتشابهين، النسبة بين الارتفاعين المتناظرين تساوي:", a: ["معامل التشابه", "مربع المعامل", "جذر المعامل", "ضعف المعامل"], c: 0 },
+            { q: "إذا كانت أطوال أضلاع مثلث <span class='math-ltr'>3, 4, 5</span> ومثلث يشبهه معامل تشابهه <span class='math-ltr'>2</span>، فإن أطوال أضلاعه:", a: ["<span class='math-ltr'>6, 8, 10</span>", "<span class='math-ltr'>5, 6, 7</span>", "<span class='math-ltr'>1.5, 2, 2.5</span>", "<span class='math-ltr'>9, 16, 25</span>"], c: 0 },
+            { q: "منصف زاوية في مثلث يقسم الضلع المقابل إلى قطعتين النسبة بين طوليهما تساوي النسبة بين:", a: ["طولي الضلعين الآخرين", "طولي الارتفاعين", "طولي المتوسطين", "طولي القطرين"], c: 0 },
+            { q: "جميع المربعات تكون دائماً:", a: ["متشابهة", "متطابقة", "متفاوتة الزوايا", "غير متشابهة"], c: 0 },
+            { q: "إذا قطع قاطعان ثلاثة مستقيمات متوازية أو أكثر، فإن أجزاء القاطعين تكون:", a: ["متناسبة", "متطابقة دائماً", "متساوية", "متعامدة"], c: 0 },
+            { q: "النسبة بين طولي متوسطين متناظرين في مثلثين متشابهين تساوي:", a: ["معامل التشابه", "مربع المعامل", "ضعف المعامل", "نصف المعامل"], c: 0 },
+            { q: "قيمة <span class='math-ltr'>x</span> في التناسب <span class='math-ltr'>x / 4 = 15 / 10</span> هي:", a: ["<span class='math-ltr'>6</span>", "<span class='math-ltr'>10</span>", "<span class='math-ltr'>4</span>", "<span class='math-ltr'>15</span>"], c: 0 },
+            { q: "إذا كان <span class='math-ltr'>△ABC ~ △DEF</span> فإن الزاوية <span class='math-ltr'>B</span> تناظر وتطابق الزاوية:", a: ["<span class='math-ltr'>E</span>", "<span class='math-ltr'>D</span>", "<span class='math-ltr'>F</span>", "<span class='math-ltr'>A</span>"], c: 0 },
+            { q: "الزوج المرتب <span class='math-ltr'>(x, y)</span> لإزاحة النقطة <span class='math-ltr'>(-3, 4)</span> بمقدار وحدتين لليمين هو:", a: ["<span class='math-ltr'>(-1, 4)</span>", "<span class='math-ltr'>(-5, 4)</span>", "<span class='math-ltr'>(-3, 6)</span>", "<span class='math-ltr'>(-3, 2)</span>"], c: 0 },
+            { q: "المضلعات التي لها نفس عدد الأضلاع وتكون منتظمة تكون دائماً:", a: ["متشابهة", "متطابقة", "مختلفة الزوايا", "متعامدة"], c: 0 },
+            { q: "إذا كان معامل التشابه <span class='math-ltr'>k = 0.5</span> فإن التحويل يسمى:", a: ["تصغير", "تكبير", "تطابق", "انعكاس"], c: 0 },
+            { q: "في المثلث، النسبة بين طولي منصفين متناظرين للزوايا تساوي:", a: ["معامل التشابه", "مربع المعامل", "ضعف المعامل", "نصف المعامل"], c: 0 },
+            { q: "إذا كانت النسبة بين ضلعي مضلعين متشابهين <span class='math-ltr'>2 : 5</span> فإن نسبة محيطيهما هي:", a: ["<span class='math-ltr'>2 : 5</span>", "<span class='math-ltr'>4 : 25</span>", "<span class='math-ltr'>5 : 2</span>", "<span class='math-ltr'>25 : 4</span>"], c: 0 },
+            { q: "المستقيمات المتوازية التي تقطع أجزاء متساوية من قاطع، تقطع أجزاء .... من أي قاطع آخر:", a: ["متساوية", "مختلفة", "متناسبة فقط", "طويلة"], c: 0 },
+            { q: "قيمة <span class='math-ltr'>x</span> التي تجعل <span class='math-ltr'>-3x = -15</span> هي:", a: ["<span class='math-ltr'>5</span>", "<span class='math-ltr'>-5</span>", "<span class='math-ltr'>18</span>", "<span class='math-ltr'>-18</span>"], c: 0 },
+            { q: "في الزوج المرتب <span class='math-ltr'>(x, y)</span>، الإحداثي الواقع على اليسار هو:", a: ["<span class='math-ltr'>x</span>", "<span class='math-ltr'>y</span>", "<span class='math-ltr'>z</span>", "<span class='math-ltr'>w</span>"], c: 0 },
+            { q: "تشابه المثلثات بحالة <span class='math-ltr'>SAS</span> يتطلب تطابق زاوية وتناسب الضلعين:", a: ["المحيطين بها", "المقابلين لها", "البعيدين عنها", "المتطابقين"], c: 0 },
+            { q: "القطعة الواصلة بين منتصفي ضلعين في مثلث تسمى قطعة:", a: ["منصفة", "متوسطة", "عمودية", "وتر"], c: 0 },
+            { q: "إذا كان معامل التشابه <span class='math-ltr'>k > 1</span> فإن التشابه يسمى:", a: ["تكبيراً", "تصغيراً", "تطابقاً", "إزاحة"], c: 0 },
+            { q: "إحداثيات منتصف القطعة التي طرفاها <span class='math-ltr'>(2, 4)</span> و <span class='math-ltr'>(6, 8)</span> هي:", a: ["<span class='math-ltr'>(4, 6)</span>", "<span class='math-ltr'>(8, 12)</span>", "<span class='math-ltr'>(2, 2)</span>", "<span class='math-ltr'>(6, 4)</span>"], c: 0 },
+            { q: "المثلثان المتطابقا الأضلاع يكونان دائماً:", a: ["متشابهين", "مختلفين", "قائمي الزاوية", "متطابقي الضلعين فقط"], c: 0 },
+            { q: "في المثلث <span class='math-ltr'>ABC</span>، إذا كان <span class='math-ltr'>D</span> منتصف <span class='math-ltr'>AB</span> و <span class='math-ltr'>E</span> منتصف <span class='math-ltr'>AC</span> فإن <span class='math-ltr'>DE / BC</span> يساوي:", a: ["<span class='math-ltr'>1 / 2</span>", "<span class='math-ltr'>2</span>", "<span class='math-ltr'>1</span>", "<span class='math-ltr'>1 / 4</span>"], c: 0 },
+            { q: "العدد السالب في الزوج المرتب تظهر إشارته دائماً على:", a: ["يسار العدد", "يمين العدد", "فوق العدد", "تحت العدد"], c: 0 }
+        ];
+
+        let shuffledQuestions = [];
+        let currentIdx = 0;
+        let score = 0;
+        let playerName = "";
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function startGame() {
+            const nameInput = document.getElementById('user-name-input');
+            if (nameInput.value.trim().split(" ").length < 3) {
+                alert("الرجاء إدخال الاسم الثلاثي كاملاً للمتابعة.");
+                return;
+            }
+            playerName = nameInput.value;
+            shuffledQuestions = shuffleArray([...questions]);
+            
+            // خلط الخيارات لكل سؤال
+            shuffledQuestions.forEach(q => {
+                let opts = q.a.map((text, index) => ({ text, isCorrect: index === q.c }));
+                q.displayOptions = shuffleArray(opts);
+            });
+
+            document.getElementById('start-screen').classList.add('hidden');
+            document.getElementById('game-screen').classList.remove('hidden');
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            const q = shuffledQuestions[currentIdx];
+            document.getElementById('question-number').innerText = `السؤال ${currentIdx + 1} / 30`;
+            document.getElementById('question-text').innerHTML = q.q;
+            document.getElementById('progress-fill').style.width = `${((currentIdx) / 30) * 100}%`;
+            
+            const container = document.getElementById('options-container');
+            container.innerHTML = '';
+            
+            q.displayOptions.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = "option-btn";
+                btn.innerHTML = opt.text;
+                btn.onclick = () => checkAnswer(btn, opt.isCorrect);
+                container.appendChild(btn);
+            });
+
+            document.getElementById('next-button').classList.add('hidden');
+        }
+
+        function checkAnswer(btn, isCorrect) {
+            const allBtns = document.querySelectorAll('.option-btn');
+            allBtns.forEach(b => b.disabled = true);
+
+            if (isCorrect) {
+                btn.classList.add('correct');
+                score++;
+                document.getElementById('current-score').innerText = `النقاط: ${score}`;
+            } else {
+                btn.classList.add('wrong');
+                // ملاحظة: حسب الطلب لا نظهر الإجابة الصحيحة عند الخطأ
+            }
+
+            document.getElementById('next-button').classList.remove('hidden');
+        }
+
+        function loadNextQuestion() {
+            currentIdx++;
+            if (currentIdx < 30) {
+                loadQuestion();
+            } else {
+                showResults();
+            }
+        }
+
+        function showResults() {
+            document.getElementById('game-screen').classList.add('hidden');
+            document.getElementById('result-screen').classList.remove('hidden');
+            document.getElementById('final-name').innerText = playerName;
+            document.getElementById('final-score').innerText = `${score} / 30`;
+        }
+    </script>
+</body>
+</html>
+
+```
 
